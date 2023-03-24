@@ -36,7 +36,6 @@ try:
 except socket.timeout:
     pass
 
-
 if device_num == 0:
     sys.exit("No sonos devices found on LAN :(")
 else:
