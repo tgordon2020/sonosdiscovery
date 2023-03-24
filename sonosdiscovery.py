@@ -30,13 +30,14 @@ try:
                 elif "LOCATION:" in line:
                     sonos_list.append(line.split(": ")[1])
                     device_num = device_num + 1
-                    print(f"Found {device_num} sonos device(s)")
                 else:
                     pass
         else:
             pass
 except socket.timeout:
     pass
+
+print(f"Found {device_num} sonos device(s)")
 
 for sonos_dev in sonos_list:
     sonos_dict = {}
