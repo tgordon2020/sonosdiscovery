@@ -2,6 +2,7 @@ import socket
 import requests
 import xmltodict
 import csv
+import sys
 
 upnp_msg = \
     'M-SEARCH * HTTP/1.1\r\n' \
@@ -17,9 +18,7 @@ upnp_send.sendto(upnp_msg.encode('utf-8'), ('239.255.255.250', 1900))
 
 sonos_list = []
 sonos_data = []
-
 device_num = 0
-
 try:
     while True:
         data, addr = upnp_send.recvfrom(65507)
@@ -37,23 +36,27 @@ try:
 except socket.timeout:
     pass
 
-print(f"Found {device_num} sonos device(s)")
 
-for sonos_dev in sonos_list:
-    sonos_dict = {}
-    sonos_resp = requests.get(sonos_dev)
-    doc = xmltodict.parse(sonos_resp.text)
-    for k,v in doc['root']['device'].items():
-        if isinstance(v,str):
-            sonos_dict[k]=v
-        else:
-            pass
-    sonos_data.append(sonos_dict)
+if device_num == 0:
+    sys.exit("No sonos devices found on LAN :(")
+else:
+    print(f"Found {device_num} sonos devices on LAN :)")
+    print("Player details written to sonos.csv")
+    for sonos_dev in sonos_list:
+        sonos_dict = {}
+        sonos_resp = requests.get(sonos_dev)
+        doc = xmltodict.parse(sonos_resp.text)
+        for k,v in doc['root']['device'].items():
+            if isinstance(v,str):
+                sonos_dict[k]=v
+            else:
+                pass
+        sonos_data.append(sonos_dict)
 
-fieldnames = set(list(k for y in sonos_data for k,v in y.items()))
+    fieldnames = set(list(k for y in sonos_data for k,v in y.items()))
 
-with open("Sonos.csv", "w", newline='') as sonos_writer:
-    writer = csv.DictWriter(sonos_writer,fieldnames=fieldnames)
-    writer.writeheader()
-    for s in sonos_data:
-        writer.writerow(s)
+    with open("Sonos.csv", "w", newline='') as sonos_writer:
+        writer = csv.DictWriter(sonos_writer,fieldnames=fieldnames)
+        writer.writeheader()
+        for s in sonos_data:
+            writer.writerow(s)
