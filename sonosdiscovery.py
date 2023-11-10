@@ -6,33 +6,35 @@ import sys
 
 upnp_msg = \
     'M-SEARCH * HTTP/1.1\r\n' \
-    'HOST:239.255.255.250:1900\r\n' \
-    'ST:upnp:rootdevice\r\n' \
-    'MX:2\r\n' \
-    'MAN:"ssdp:discover"\r\n' \
+    'HOST: 239.255.255.250:1900\r\n' \
+    'MAN: "ssdp:discover"\r\n' \
+    'MX: 1\r\n' \
+    'ST: urn:schemas-upnp-org:device:ZonePlayer:1\r\n' \
     '\r\n'
 
+ttl = int(input("What TTL: "))
 upnp_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-upnp_send.settimeout(2)
+upnp_send.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+upnp_send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+upnp_send.settimeout(5)
+upnp_send.sendto(upnp_msg.encode('utf-8'), ('255.255.255.255', 1900))
 upnp_send.sendto(upnp_msg.encode('utf-8'), ('239.255.255.250', 1900))
 
 sonos_list = []
 sonos_data = []
 device_num = 0
+
 try:
     while True:
         data, addr = upnp_send.recvfrom(65507)
-        if "Sonos" in data.decode():
-            for line in data.decode().split("\r\n"):
-                if "SECURE" in line:
-                    pass
-                elif "LOCATION:" in line:
-                    sonos_list.append(line.split(": ")[1])
-                    device_num = device_num + 1
-                else:
-                    pass
-        else:
-            pass
+        for line in data.decode().split("\r\n"):
+            if "SECURE" in line:
+                pass
+            elif "LOCATION:" in line:
+                sonos_list.append(line.split(": ")[1])
+                device_num = device_num + 1
+            else:
+                pass
 except socket.timeout:
     pass
 
